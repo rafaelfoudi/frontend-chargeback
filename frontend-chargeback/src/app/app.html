@@ -1,0 +1,105 @@
+<div style="padding: 30px; font-family: Arial, sans-serif; max-width: 1100px; margin: 0 auto;">
+  <h2>Painel de Simulação de Chargeback</h2>
+
+  <!-- Cadastro de Transação -->
+  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 30px;">
+    <h3>Nova Transação de Troca</h3>
+    
+    <form (ngSubmit)="cadastrarTransacao()" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+      <div>
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">ID Cliente:</label>
+        <input type="text" [(ngModel)]="novaTransacao.clienteId" name="clienteId" required style="width: 100%; padding: 8px;">
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Pontos Usados:</label>
+        <input type="number" [(ngModel)]="novaTransacao.pontos" name="pontos" required style="width: 100%; padding: 8px;">
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Valor em R$ (Cartão):</label>
+        <input type="number" step="0.01" [(ngModel)]="novaTransacao.valorReais" name="valorReais" required style="width: 100%; padding: 8px;">
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Milhas Recebidas:</label>
+        <input type="number" [(ngModel)]="novaTransacao.milhas" name="milhas" required style="width: 100%; padding: 8px;">
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Código do Cupom Bônus:</label>
+        <input type="text" [(ngModel)]="novaTransacao.cupomCodigo" name="cupomCodigo" style="width: 100%; padding: 8px;">
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Cupom Já Foi Usado?</label>
+        <select [(ngModel)]="novaTransacao.cupomUsado" name="cupomUsado" style="width: 100%; padding: 8px;">
+          <option [ngValue]="false">Não (Normal)</option>
+          <option [ngValue]="true">Sim (Testar cenário de exceção)</option>
+        </select>
+      </div>
+
+      <div style="grid-column: span 3; text-align: right; margin-top: 10px;">
+        <button type="submit" [disabled]="carregando()" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+          {{ carregando() ? 'Salvando...' : 'Cadastrar Transação' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabela de Transações -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3>Histórico de Transações</h3>
+    <button (click)="carregarTransacoes()" style="padding: 8px 16px; cursor: pointer;">
+      🔄 Atualizar Lista
+    </button>
+  </div>
+
+  <table border="1" cellpadding="12" cellspacing="0" style="width: 100%; text-align: left; border-collapse: collapse; border-color: #ddd;">
+    <thead>
+      <tr style="background-color: #f4f4f9;">
+        <th>ID Transação</th>
+        <th>Cliente</th>
+        <th>Detalhes da Troca</th>
+        <th>Status</th>
+        <th>Histórico de Compensação</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of transacoes()">
+        <td style="font-family: monospace; font-size: 12px;">{{ t.id }}</td>
+        <td>{{ t.clienteId }}</td>
+        <td>
+          <b>{{ t.pontos }} pts</b> + <b>R$ {{ t.valorReais }}</b><br>
+          ➔ {{ t.milhas }} Milhas + Cupom {{ t.cupomCodigo }}
+          @if (t.cupomUsado) {
+          <span style="color: orange; font-size: 11px;">(Cupom Usado)</span>
+          }  
+        </td>
+        <td>
+          <span [style.color]="t.status === 'CHARGEBACK_CONCLUIDO' ? '#d9534f' : (t.status === 'CHARGEBACK_PROCESSANDO' ? '#f0ad4e' : '#5cb85c')" style="font-weight: bold;">
+            {{ t.status }}
+          </span>
+        </td>
+        <td style="font-size: 13px; color: #444;">
+          {{ t.observacao || 'Nenhuma ação executada ainda.' }}
+        </td>
+        <td>
+          <button 
+            *ngIf="t.status === 'COMPRA_REALIZADA'" 
+            (click)="simularChargeback(t.id!)"
+            [disabled]="carregando()"
+            style="padding: 6px 12px; background-color: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            {{ carregando() ? 'Enviando...' : 'Simular Chargeback' }}
+          </button>
+        </td>
+      </tr>
+      <tr *ngIf="transacoes().length === 0">
+        <td colspan="6" style="text-align: center; color: #888;">
+          Nenhuma transação encontrada. Cadastre uma acima para iniciar o teste.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
